@@ -21,9 +21,9 @@ try
     string pattern = @"^(\d{9})-(\d{2})(?:(-(?:-(.+))?)?(\d{3}))?(?:\.(\w+))?$";
 
     // Recursively search for all files in subdirectories of the source directory.
-    string[] allFiles = Directory.GetFiles(sourceDirectory, "*", SearchOption.AllDirectories);
+    string[] allDirectories = Directory.GetDirectories(sourceDirectory, "*", SearchOption.AllDirectories);
 
-    foreach (string filePath in allFiles)
+    foreach (string filePath in allDirectories)
     {
         try
         {
@@ -38,7 +38,7 @@ try
                 string docNo = match.Groups[4].Value;
                 string extension = match.Groups[5].Success ? match.Groups[5].Value : "";
 
-                string newFileName;
+                string newFileName=string.Empty;
 
                 if (string.IsNullOrEmpty(docName) && string.IsNullOrEmpty(docNo))
                 {
