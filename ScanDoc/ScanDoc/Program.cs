@@ -28,7 +28,7 @@ internal class Program
                 return; // Exit the program if the source directory is missing.
             }
 
-            string pattern = @"^(\d{9}-\d{2})-(.+)\.(.+)$"; // Updated pattern to match the desired format
+            string pattern = @"^(\d{9}-\d{2})-(.+)\.(.+)$"; // Pattern to match the desired format
 
             // Recursively search for all files in subdirectories of the source directory.
             string[] allFiles = Directory.GetFiles(sourceDirectory, "*", SearchOption.AllDirectories);
@@ -45,8 +45,8 @@ internal class Program
                         string caseNumber = match.Groups[1].Value;
                         string companyNumber = match.Groups[2].Value;
                         string extension = match.Groups[3].Value;
-                        string newFileName = $"{companyNumber}-{caseNumber}-{Path.GetFileNameWithoutExtension(fileName)}.{extension}";
-                        string destinationFolder = Path.Combine(destinationDirectory, $"{companyNumber}-{caseNumber}");
+                        string newFileName = $"{companyNumber}{caseNumber}_{Path.GetFileNameWithoutExtension(fileName)}.{extension}";
+                        string destinationFolder = Path.Combine(destinationDirectory, $"{companyNumber}{caseNumber}");
 
                         if (!Directory.Exists(destinationFolder))
                         {
