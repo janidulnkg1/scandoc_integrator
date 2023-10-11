@@ -34,3 +34,4 @@ C:\Users\Janidu Lankage\Documents\GitHub\scandoc_integrator\ScanDoc\ScanDoc\obj\
 C:\Users\Janidu Lankage\Documents\GitHub\scandoc_integrator\ScanDoc\ScanDoc\obj\Debug\net7.0\ScanDoc.pdb
 C:\Users\Janidu Lankage\Documents\GitHub\scandoc_integrator\ScanDoc\ScanDoc\obj\Debug\net7.0\ScanDoc.genruntimeconfig.cache
 C:\Users\Janidu Lankage\Documents\GitHub\scandoc_integrator\ScanDoc\ScanDoc\obj\Debug\net7.0\ref\ScanDoc.dll
+C:\Users\Janidu Lankage\Documents\GitHub\scandoc_integrator\ScanDoc\ScanDoc\bin\Debug\net7.0\config.json
