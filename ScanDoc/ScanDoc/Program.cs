@@ -4,61 +4,72 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using ScanDoc.Logger;
 
-ILogger logging = new Logger();
-
-try
+internal class Program
 {
-    IConfigurationBuilder builder = new ConfigurationBuilder()
-        .SetBasePath(Directory.GetCurrentDirectory())
-        .AddJsonFile("config.json", optional: true, reloadOnChange: true);
-
-    IConfiguration configuration = builder.Build();
-
-    string sourceDirectory = configuration["SourceDirectory"];
-    string destinationDirectory = configuration["DestinationDirectory"];
-
-    if (!Directory.Exists(destinationDirectory))
+    private static void Main(string[] args)
     {
-        Directory.CreateDirectory(destinationDirectory);
-    }
+        ILogger logging = new Logger();
 
-    string pattern = @"^(\d{9}-\d{2})_(.+)\..+$"; // Check for files in intended format with any extension
-
-    string[] allFiles = Directory.GetFiles(sourceDirectory); // Getting all available files
-
-    foreach (string filePath in allFiles)
-    {
         try
         {
-            string fileName = Path.GetFileName(filePath);
-            Match match = Regex.Match(fileName, pattern);
+            IConfigurationBuilder builder = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("config.json", optional: true, reloadOnChange: true);
 
-            if (match.Success)
+            IConfiguration configuration = builder.Build();
+
+            string sourceDirectory = configuration["SourceDirectory"];
+            string destinationDirectory = configuration["DestinationDirectory"];
+
+            // Check if the source directory exists.
+            if (!Directory.Exists(sourceDirectory))
             {
-                string caseNumberCompanyNo = match.Groups[1].Value;
-                string newFileName = caseNumberCompanyNo + "_" + match.Groups[2].Value + Path.GetExtension(fileName);
-                string destinationFolder = Path.Combine(destinationDirectory, caseNumberCompanyNo);
-
-                if (!Directory.Exists(destinationFolder))
-                {
-                    Directory.CreateDirectory(destinationFolder);
-                }
-
-                string newFilePath = Path.Combine(destinationFolder, newFileName);
-
-                File.Move(filePath, newFilePath);
-                logging.Log($"Moved: {filePath} to {newFilePath}");
+                logging.Log($"Source directory does not exist: {sourceDirectory}");
+                return; // Exit the program if the source directory is missing.
             }
+
+            string pattern = @"^(\d{9}-\d{2})-(.+)\.(.+)$"; // Updated pattern to match the desired format
+
+            // Recursively search for all files in subdirectories of the source directory.
+            string[] allFiles = Directory.GetFiles(sourceDirectory, "*", SearchOption.AllDirectories);
+
+            foreach (string filePath in allFiles)
+            {
+                try
+                {
+                    string fileName = Path.GetFileName(filePath);
+                    Match match = Regex.Match(fileName, pattern);
+
+                    if (match.Success)
+                    {
+                        string caseNumber = match.Groups[1].Value;
+                        string companyNumber = match.Groups[2].Value;
+                        string extension = match.Groups[3].Value;
+                        string newFileName = $"{companyNumber}-{caseNumber}-{Path.GetFileNameWithoutExtension(fileName)}.{extension}";
+                        string destinationFolder = Path.Combine(destinationDirectory, $"{companyNumber}-{caseNumber}");
+
+                        if (!Directory.Exists(destinationFolder))
+                        {
+                            Directory.CreateDirectory(destinationFolder);
+                        }
+
+                        string newFilePath = Path.Combine(destinationFolder, newFileName);
+
+                        File.Move(filePath, newFilePath);
+                        logging.Log($"Moved: {filePath} to {newFilePath}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logging.Log($"Error processing file: {filePath}. Error: {ex.Message}");
+                }
+            }
+
+            logging.Log("Processing complete.");
         }
         catch (Exception ex)
         {
-            logging.Log($"Error processing file: {filePath}. Error: {ex.Message}");
+            logging.Log($"Error: {ex.Message}");
         }
     }
-
-    logging.Log("Processing complete.");
-}
-catch (Exception ex)
-{
-    logging.Log($"Error: {ex.Message}");
 }
