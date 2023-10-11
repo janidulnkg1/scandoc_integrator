@@ -23,11 +23,11 @@ try
     // Recursively search for all files in subdirectories of the source directory.
     string[] allDirectories = Directory.GetDirectories(sourceDirectory, "*", SearchOption.AllDirectories);
 
-    foreach (string filePath in allDirectories)
+    foreach (string directory in allDirectories)
     {
         try
         {
-            string fileName = Path.GetFileName(filePath);
+            string fileName = Path.GetFileName(directory);
             Match match = Regex.Match(fileName, pattern);
 
             if (match.Success)
@@ -66,13 +66,13 @@ try
 
                 string newFilePath = Path.Combine(destinationFolder, newFileName);
 
-                File.Move(filePath, newFilePath);
+                File.Move(directory, newFilePath);
                 logging.Log($"Moved: {fileName} to {newFilePath}");
             }
         }
         catch (Exception ex)
         {
-            logging.Log($"Error processing file: {filePath}. Error: {ex.Message}");
+            logging.Log($"Error processing file: {directory}. Error: {ex.Message}");
         }
     }
 
