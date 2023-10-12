@@ -10,96 +10,103 @@ public class Program
     {
         ILogger logging = new Logger();
 
-        while (true) // Infinite loop
+        try
         {
-            try
+            IConfigurationBuilder builder = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("config.json", optional: true, reloadOnChange: true);
+
+            IConfiguration configuration = builder.Build();
+
+            string sourceDirectory = configuration["SourceDirectory"];
+            string destinationDirectory = configuration["DestinationDirectory"];
+
+            // Define the patterns to match the desired formats and capture groups
+            string pattern1 = @"^(\d{9})-(\d{2})-([^-]+)-(\d{3})\.(\w+)$"; 
+            string pattern2 = @"^(\d{9})-(\d{2})-([^.]+)\.(\w+)$";
+            string pattern3 = @"^(\d{9})-(\d{2})-(\d{3})\.(\w+)$";
+            string pattern4 = @"^(\d{9})-(\d{2})\.(\w+)$";
+
+            // Recursively search for all subdirectories.
+            string[] allDirectories = Directory.GetDirectories(sourceDirectory, "*", SearchOption.AllDirectories);
+
+            foreach (string directory in allDirectories)
             {
-                IConfigurationBuilder builder = new ConfigurationBuilder()
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("config.json", optional: true, reloadOnChange: true);
-
-                IConfiguration configuration = builder.Build();
-
-                string sourceDirectory = configuration["SourceDirectory"];
-                string destinationDirectory = configuration["DestinationDirectory"];
-
-                // Define the pattern to match the desired format and capture groups
-                string pattern = @"^(\d+)-(\d+)-([^.-]+)-(\d+)\.(\w+)$";
-
-                // Recursively search for all subdirectories.
-                string[] allDirectories = Directory.GetDirectories(sourceDirectory, "*", SearchOption.AllDirectories);
-
-                foreach (string directory in allDirectories)
+                try
                 {
-                    try
+                    // Find all files within the current subdirectory.
+                    string[] filesInDirectory = Directory.GetFiles(directory);
+
+                    foreach (string filePath in filesInDirectory)
                     {
-                        // Find all files within the current subdirectory.
-                        string[] filesInDirectory = Directory.GetFiles(directory);
+                        string fileName = Path.GetFileName(filePath);
+                        Match match = null;
+                        string newFileName = null;
 
-                        foreach (string filePath in filesInDirectory)
+                        string caseNumber = match.Groups[1].Value;
+                        string companyNumber = match.Groups[2].Value;
+
+
+                        if ((match = Regex.Match(fileName, pattern1)).Success)
                         {
-                            string fileName = Path.GetFileName(filePath);
-                            Match match = Regex.Match(fileName, pattern);
+                           
+                            string docName = match.Groups[3].Value;
+                            string docNo = match.Groups[4].Value;
+                            string extension = match.Groups[5].Value;
 
-                            if (match.Success)
+                            newFileName = $"{caseNumber}{companyNumber}_{docName}_{docNo}.{extension}";
+                        }
+                        else if ((match = Regex.Match(fileName, pattern2)).Success)
+                        {
+                            
+                            string docName = match.Groups[3].Value;
+                            string extension = match.Groups[4].Value;
+
+                            newFileName = $"{caseNumber}{companyNumber}_{docName}.{extension}";
+                        }
+                        else if ((match = Regex.Match(fileName, pattern3)).Success)
+                        {
+                            
+                            string docNo = match.Groups[3].Value;
+                            string extension = match.Groups[4].Value;
+
+                            newFileName = $"{caseNumber}{companyNumber}_{docNo}.{extension}";
+                        }
+                        else if ((match = Regex.Match(fileName, pattern4)).Success)
+                        {
+                            
+                            string extension = match.Groups[3].Value;
+
+                            newFileName = $"{caseNumber}{companyNumber}.{extension}";
+                        }
+
+                        if (newFileName != null)
+                        {
+                            string destinationFolder = Path.Combine(destinationDirectory, $"{companyNumber}{caseNumber}");
+
+                            if (!Directory.Exists(destinationFolder))
                             {
-                                string caseNumber = match.Groups[1].Value;
-                                string companyNumber = match.Groups[2].Value;
-                                string docName = match.Groups[3].Value;
-                                string docNo = match.Groups[4].Value;
-                                string extension = match.Groups[5].Value;
-
-                                string newFileName = string.Empty;
-
-                                if (string.IsNullOrEmpty(docName) && string.IsNullOrEmpty(docNo))
-                                {
-                                    newFileName = $"{companyNumber}{caseNumber}.{extension}";
-                                }
-                                else if (string.IsNullOrEmpty(docName))
-                                {
-                                    newFileName = $"{companyNumber}{caseNumber}_{docNo}.{extension}";
-                                }
-                                else if (string.IsNullOrEmpty(docNo))
-                                {
-                                    newFileName = $"{companyNumber}{caseNumber}_{docName}.{extension}";
-                                }
-                                else if (!string.IsNullOrEmpty(docName) && !string.IsNullOrEmpty(docNo))
-                                {
-                                    newFileName = $"{companyNumber}{caseNumber}_{docName}_{docNo}.{extension}";
-                                }
-
-                                string destinationFolder = Path.Combine(destinationDirectory, $"{companyNumber}{caseNumber}");
-
-                                if (!Directory.Exists(destinationFolder))
-                                {
-                                    Directory.CreateDirectory(destinationFolder);
-                                }
-
-                                string newFilePath = Path.Combine(destinationFolder, newFileName);
-
-                                File.Copy(filePath, newFilePath); // Copy the file
-
-                                logging.Log($"Copied: {fileName} to {newFilePath}");
-
+                                Directory.CreateDirectory(destinationFolder);
                             }
+
+                            string newFilePath = Path.Combine(destinationFolder, newFileName);
+
+                            File.Copy(filePath, newFilePath);
+                            logging.Log($"Copy: {fileName} to {newFilePath}");
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        logging.Log($"Error processing directory: {directory}. Error: {ex.Message}");
-                    }
                 }
-
-                logging.Log("Processing complete.");
-            }
-            catch (Exception ex)
-            {
-                logging.Log($"Error: {ex.Message}");
+                catch (Exception ex)
+                {
+                    logging.Log($"Error processing directory: {directory}. Error: {ex.Message}");
+                }
             }
 
-            // Sleep for a while before the next iteration (e.g., 1 hour)
-            System.Threading.Thread.Sleep(TimeSpan.FromHours(1));
-            }
+            logging.Log("Processing complete.");
+        }
+        catch (Exception ex)
+        {
+            logging.Log($"Error: {ex.Message}");
         }
     }
-
+}
