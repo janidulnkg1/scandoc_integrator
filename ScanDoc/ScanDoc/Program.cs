@@ -10,8 +10,7 @@ public class Program
     {
         ILogger logging = new Logger();
 
-        while (true) //Continuosly keep Looping
-        {
+       
             try
             {
                 IConfigurationBuilder builder = new ConfigurationBuilder()
@@ -23,11 +22,11 @@ public class Program
                 string sourceDirectory = configuration["SourceDirectory"];
                 string destinationDirectory = configuration["DestinationDirectory"];
 
-                // Define the patterns to match the desired formats and capture groups
-                string pattern1 = @"^(\d{9})-(\d{2})-([^-]+)-(\d{3})\.(\w+)$";
-                string pattern2 = @"^(\d{9})-(\d{2})-([^.]+)\.(\w+)$";
-                string pattern3 = @"^(\d{9})-(\d{2})-(\d{3})\.(\w+)$";
-                string pattern4 = @"^(\d{9})-(\d{2})\.(\w+)$";
+                // Defining the patterns to match the desired formats and capture groups in the Initial Source Folder files
+                string pattern1 = @"^(\d{9})-(\d{2})-([^-]+)-(\d{3})\.(\w+)$"; // {case no}-{company no}-{doc name}-{doc no eg:001}.{extension}
+                string pattern2 = @"^(\d{9})-(\d{2})-([^.]+)\.(\w+)$"; // {case no}-{company no}-{doc name}.{extension}
+                string pattern3 = @"^(\d{9})-(\d{2})-(\d{3})\.(\w+)$"; // {case no}-{company no}-{doc no eg:001}.{extension}
+                string pattern4 = @"^(\d{9})-(\d{2})\.(\w+)$"; // {case no}-{company no}.{extension}
 
                 // Recursively search for all subdirectories.
                 string[] allDirectories = Directory.GetDirectories(sourceDirectory, "*", SearchOption.AllDirectories);
@@ -39,11 +38,15 @@ public class Program
                         // Find all files within the current subdirectory.
                         string[] filesInDirectory = Directory.GetFiles(directory);
 
+                        // Dictionary to keep track of encountered file names and their counts
+                        Dictionary<string, int> encounteredFileNames = new Dictionary<string, int>();
+
                         foreach (string filePath in filesInDirectory)
                         {
                             string fileName = Path.GetFileName(filePath);
-                            Match match = null;
-                            string newFileName = null;
+                            Match? match = null;
+                            string? newFileName = null;
+                            string? baseFileName = null;
 
                             if ((match = Regex.Match(fileName, pattern1)).Success)
                             {
@@ -62,7 +65,21 @@ public class Program
                                 string docName = match.Groups[3].Value;
                                 string extension = match.Groups[4].Value;
 
-                                newFileName = $"{companyNumber}{caseNumber}_{docName}.{extension}";
+                                baseFileName = $"{companyNumber}{caseNumber}_{docName}";
+
+                                if (encounteredFileNames.ContainsKey(baseFileName))
+                                {
+                                    // If there's a duplicate, increment the count in 3 digits (001 etc)
+                                    int fileCount = encounteredFileNames[baseFileName];
+                                    encounteredFileNames[baseFileName] = fileCount + 1;
+                                    newFileName = $"{baseFileName}-{fileCount:D3}.{extension}";
+                                }
+                                else
+                                {
+                                    // If it's the first occurrence, marking it as 1
+                                    encounteredFileNames[baseFileName] = 1;
+                                    newFileName = baseFileName;
+                                }
                             }
                             else if ((match = Regex.Match(fileName, pattern3)).Success)
                             {
@@ -79,7 +96,21 @@ public class Program
                                 string companyNumber = match.Groups[2].Value;
                                 string extension = match.Groups[3].Value;
 
-                                newFileName = $"{companyNumber}{caseNumber}.{extension}";
+                                baseFileName = $"{companyNumber}{caseNumber}";
+
+                                if (encounteredFileNames.ContainsKey(baseFileName))
+                                {
+                                    // If there's a duplicate, increment the count in 3 digits (001 etc)
+                                    int fileCount = encounteredFileNames[baseFileName];
+                                    encounteredFileNames[baseFileName] = fileCount + 1;
+                                    newFileName = $"{baseFileName}-{fileCount:D3}.{extension}";
+                                }
+                                else
+                                {
+                                    // If it's the first occurrence, mark it as 1
+                                    encounteredFileNames[baseFileName] = 1;
+                                    newFileName = baseFileName;
+                                }
                             }
 
                             if (newFileName != null)
@@ -96,7 +127,7 @@ public class Program
                                 string newFilePath = Path.Combine(destinationFolder, newFileName);
 
                                 File.Copy(filePath, newFilePath);
-                                logging.Log($"Copy: {fileName} to {newFilePath}");
+                                logging.Log($"Copied: {fileName} to {newFilePath}");
                             }
                         }
                     }
@@ -107,6 +138,7 @@ public class Program
                 }
 
                 logging.Log("Processing complete.");
+            Console.WriteLine("Peocessing Completed Successfully!");
             }
             catch (Exception ex)
             {
@@ -114,7 +146,6 @@ public class Program
             }
 
             
-            System.Threading.Thread.Sleep(1000); 
-        }
+          
     }
 }
