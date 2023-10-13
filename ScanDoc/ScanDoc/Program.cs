@@ -23,6 +23,30 @@ public class Program
                 string sourceDirectory = configuration["SourceDirectory"];
                 string destinationDirectory = configuration["DestinationDirectory"];
 
+                // Check if the source directory exists
+                if (!Directory.Exists(sourceDirectory))
+                {
+                    logging.Log($"Error! Source directory:'{sourceDirectory}' does not exist!");
+                    return;
+                }
+
+                // Check if the destination directory exists
+                if (!Directory.Exists(destinationDirectory))
+                    {
+                        logging.Log($"Error: Destination directory:'{destinationDirectory}' does not exist!");
+                        return;
+                    }
+
+                // Get information about the drive where the destination directory is located
+                DriveInfo driveInfo = new DriveInfo(Path.GetPathRoot(destinationDirectory));
+
+                if (driveInfo.AvailableFreeSpace < 1024 * 1024 * 1024)
+                {
+                    // Check if there's less than 1 GB of free space
+                    logging.Log($"Error: Insufficient space in the destination drive.");
+                    return;
+                }
+
                 // Defining the patterns to match the desired formats and capture groups in the Initial Source Folder files
                 string pattern1 = @"^(\d{9})-(\d{2})-([^-]+)-(\d{3})\.(\w+)$"; // {case no}-{company no}-{doc name}-{doc no eg:001}.{extension}
                 string pattern2 = @"^(\d{9})-(\d{2})-([^.]+)\.(\w+)$"; // {case no}-{company no}-{doc name}.{extension}
