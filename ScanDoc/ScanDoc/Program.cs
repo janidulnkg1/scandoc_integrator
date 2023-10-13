@@ -32,10 +32,10 @@ public class Program
 
                 // Check if the destination directory exists
                 if (!Directory.Exists(destinationDirectory))
-                    {
-                        logging.Log($"Error: Destination directory:'{destinationDirectory}' does not exist!");
-                        return;
-                    }
+                {
+                    logging.Log($"Error: Destination directory:'{destinationDirectory}' does not exist!");
+                    return;
+                }
 
                 // Get information about the drive where the destination directory is located
                 DriveInfo driveInfo = new DriveInfo(Path.GetPathRoot(destinationDirectory));
