@@ -9,9 +9,10 @@ public class Program
     private static void Main(string[] args)
     {
         ILogger logging = new Logger();
+        int filesCopiedCount = 0;
 
-       
-            try
+
+        try
             {
                 IConfigurationBuilder builder = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
@@ -128,6 +129,7 @@ public class Program
 
                                 File.Copy(filePath, newFilePath);
                                 logging.Log($"Copied: {fileName} to {newFilePath}");
+                                filesCopiedCount++; //Incrementing count
                             }
                         }
                     }
@@ -138,9 +140,11 @@ public class Program
                 }
 
                 logging.Log("Processing complete.");
-            Console.WriteLine("Peocessing Completed Successfully!");
-            }
-            catch (Exception ex)
+                Console.WriteLine("Peocessing Completed Successfully!");
+                Console.WriteLine($" Total Files Copied: {filesCopiedCount}");
+
+        }
+        catch (Exception ex)
             {
                 logging.Log($"Error: {ex.Message}");
             }
